@@ -11,33 +11,25 @@ export async function onRequestGet({ request }) {
     })
     if (!rawResp.ok) throw new Error(`上游状态码:${rawResp.status}`)
     const rawList = await rawResp.json()
-
-    // 核心修复：如果不是数组，直接设为空数组，避免 .filter 报错
     const arr = Array.isArray(rawList) ? rawList : []
 
-    const sources = arr.filter(item => {
-      if (item.status !== "ok") return false
-      if (!item.api) return false
-      if (!item.api.includes("/api.php/provide/vod")) return false
-      if (item.api.includes("shturl.cc")) return false
-      return true
-    }).map(item=>({name:item.name,api:item.api}))
+    // 【调试：先不做过滤，原样返回前3条，看上游到底拿到什么】
+    const testData = arr.slice(0,3)
 
     const result = {
-      name: "ziyuanzhan自动过滤订阅(剔除短链)",
+      name: "ziyuanzhan调试",
       version: 2,
-      sources,
+      sources: testData,
       liveSources: []
     }
 
-    const response = new Response(JSON.stringify(result, null, 2), {
+    return new Response(JSON.stringify(result, null, 2), {
       headers: {
         "Content-Type": "application/json;charset=utf-8",
         "Cache-Control": "s-maxage=300, stale-while-revalidate=600",
         "Access-Control-Allow-Origin": "*"
       }
     })
-    return response
   } catch (e) {
     return new Response(JSON.stringify({ error: "拉取上游失败", msg: e.message }, null, 2), {
       status: 500,
