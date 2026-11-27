@@ -12,15 +12,16 @@ export async function onRequestGet({ request }) {
     if (!rawResp.ok) throw new Error(`上游状态码:${rawResp.status}`)
     const rawList = await rawResp.json()
 
-    // 修正匹配条件，同时保留 shturl.cc 过滤
-    const sources = rawList.filter(item => {
+    // 核心修复：如果不是数组，直接设为空数组，避免 .filter 报错
+    const arr = Array.isArray(rawList) ? rawList : []
+
+    const sources = arr.filter(item => {
       if (item.status !== "ok") return false
       if (!item.api) return false
-      // 兼容带 / 和不带 / 的情况
       if (!item.api.includes("/api.php/provide/vod")) return false
       if (item.api.includes("shturl.cc")) return false
       return true
-    })
+    }).map(item=>({name:item.name,api:item.api}))
 
     const result = {
       name: "ziyuanzhan自动过滤订阅(剔除短链)",
