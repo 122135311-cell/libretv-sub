@@ -1,4 +1,4 @@
-export async function onRequestGet({ request, env, ctx }) {
+export async function onRequestGet({ request }) {
   const cache = caches.default
   const cacheKey = new Request(request.url, request)
   let cachedRes = await cache.match(cacheKey)
@@ -12,9 +12,7 @@ export async function onRequestGet({ request, env, ctx }) {
     if (!rawResp.ok) throw new Error(`上游状态码:${rawResp.status}`)
     const rawList = await rawResp.json()
 
-    // 关键修复：判断是否为数组，不是数组就赋值空数组
     const arr = Array.isArray(rawList) ? rawList : []
-
     const sources = []
     for (const item of arr) {
       if (item.status !== "ok") continue
@@ -50,7 +48,6 @@ export async function onRequestGet({ request, env, ctx }) {
         "Access-Control-Allow-Origin": "*"
       }
     })
-    ctx.waitUntil(cache.put(cacheKey, response.clone()))
     return response
   } catch (e) {
     return new Response(JSON.stringify({ error: "拉取上游失败", msg: e.message }, null, 2), {
