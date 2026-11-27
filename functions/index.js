@@ -12,27 +12,15 @@ export async function onRequestGet({ request }) {
     if (!rawResp.ok) throw new Error(`上游状态码:${rawResp.status}`)
     const rawList = await rawResp.json()
 
-    const arr = Array.isArray(rawList) ? rawList : []
-    const sources = []
-    for (const item of arr) {
-      if (item.status !== "ok") continue
-      if (!item.api || !item.api.includes("/api.php/provide/vod")) continue
-      if (item.api.includes("shturl.cc")) continue
-
-      let isAdult = false
-      const name = item.name ?? "未知源"
-      const lowName = name.toLowerCase()
-      if (/(av|成人|杏|骚|色情)/.test(lowName)) {
-        isAdult = true
-      }
-
-      sources.push({
-        name,
-        url: item.api,
-        detail: "",
-        isAdult
-      })
-    }
+    // 修正匹配条件，同时保留 shturl.cc 过滤
+    const sources = rawList.filter(item => {
+      if (item.status !== "ok") return false
+      if (!item.api) return false
+      // 兼容带 / 和不带 / 的情况
+      if (!item.api.includes("/api.php/provide/vod")) return false
+      if (item.api.includes("shturl.cc")) return false
+      return true
+    })
 
     const result = {
       name: "ziyuanzhan自动过滤订阅(剔除短链)",
