@@ -12,8 +12,11 @@ export async function onRequestGet({ request, env, ctx }) {
     if (!rawResp.ok) throw new Error(`上游状态码:${rawResp.status}`)
     const rawList = await rawResp.json()
 
+    // 关键修复：判断是否为数组，不是数组就赋值空数组
+    const arr = Array.isArray(rawList) ? rawList : []
+
     const sources = []
-    for (const item of rawList) {
+    for (const item of arr) {
       if (item.status !== "ok") continue
       if (!item.api || !item.api.includes("/api.php/provide/vod")) continue
       if (item.api.includes("shturl.cc")) continue
